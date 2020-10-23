@@ -1,0 +1,20 @@
+[package]
+name = "rusty_snake_markov"
+version = "0.1.0"
+authors = ["zomatree <angelokontaxis@hotmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+markov = "*"
+num-bigint = "0.2"
+petgraph = "*"
+
+[dependencies.pyo3]
+git = "https://github.com/PyO3/pyo3"
+features = ["extension-module", "num-bigint"]
+
+[lib]
+name = "rusty_snake_markov"
+crate-type = ["cdylib"]
