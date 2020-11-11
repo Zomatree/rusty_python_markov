@@ -42,7 +42,6 @@ impl Markov {
 
     pub fn graph(&self) -> PyResult<String> {
         let graph: Graph<Vec<Option<String>>, f64> = self.chain.graph();
-
         Ok(format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel])))
     } 
 
