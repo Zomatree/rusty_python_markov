@@ -22,12 +22,12 @@ impl Markov {
 
     pub fn train(&mut self, messages: &PyList) -> PyResult<()> {
         for elem in messages.iter() {
-            self.chain.feed_str(elem.downcast::<PyString>().unwrap().to_str().unwrap_or_default());
+            self.train_single(elem.downcast::<PyString>().unwrap()).unwrap();
         }
         Ok(())
     }
 
-    pub fn train_single(&mut self, message: &PyList) -> PyResult<()> {
+    pub fn train_single(&mut self, message: &PyString) -> PyResult<()> {
         self.chain.feed_str(message.downcast::<PyString>().unwrap().to_str().unwrap());
         Ok(())
     }
