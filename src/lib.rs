@@ -2,11 +2,12 @@ extern crate markov;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use markov::Chain;
-use pyo3::types::{PyList, PyString, PyType};
+use pyo3::types::{PyInt, PyList, PyString, PyType};
 use petgraph::{dot::{Dot, Config}, graph::Graph};
 
 
 #[pyclass]
+#[text_signature = "(order: Optional[int], /)"]
 struct Markov {
     chain: Chain<String>
 }
@@ -14,9 +15,17 @@ struct Markov {
 #[pymethods]
 impl Markov {
     #[new]
-    fn new() -> Self {
+    fn new(order: &PyInt) -> Self {
         Markov {
-            chain: Chain::new()
+            chain: {
+                if order.is_none() {
+                    Chain::new()
+                }
+                else {
+                    let value: usize = order.extract().unwrap();
+                    Chain::of_order(value)
+                }
+            }
         }
     }
 
