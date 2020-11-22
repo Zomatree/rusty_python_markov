@@ -1,6 +1,5 @@
 extern crate markov;
 use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
 use markov::Chain;
 use pyo3::types::{PyInt, PyList, PyString, PyType};
 use petgraph::{dot::{Dot, Config}, graph::Graph};
@@ -15,29 +14,27 @@ struct Markov {
 #[pymethods]
 impl Markov {
     #[new]
-    fn new(order: &PyInt) -> Self {
-        Markov {
-            chain: {
-                if order.is_none() {
-                    Chain::new()
-                }
-                else {
-                    let value: usize = order.extract().unwrap();
+    fn new(order: &PyInt) -> PyResult<Self> {
+        Ok(Markov {
+            chain: match order.is_none() {
+                true => Chain::new(),
+                false => {
+                    let value: usize = order.extract()?;
                     Chain::of_order(value)
                 }
             }
-        }
+        })
     }
 
     pub fn train(&mut self, messages: &PyList) -> PyResult<()> {
         for elem in messages.iter() {
-            self.train_single(elem.downcast::<PyString>().unwrap()).unwrap();
+            self.train_single(elem.downcast::<PyString>()?)?;
         }
         Ok(())
     }
 
     pub fn train_single(&mut self, message: &PyString) -> PyResult<()> {
-        self.chain.feed_str(message.downcast::<PyString>().unwrap().to_str().unwrap());
+        self.chain.feed_str(message.downcast::<PyString>()?.to_str()?);
         Ok(())
     }
 
@@ -55,30 +52,18 @@ impl Markov {
     } 
 
     pub fn save(&self, path: &PyString) -> PyResult<()> {
-        self.chain.save(path.downcast::<PyString>().unwrap().to_str().unwrap()).unwrap();
+        self.chain.save(path.downcast::<PyString>()?.to_str()?)?;
         Ok(())
     }
 
     #[classmethod]
     pub fn load(_: &PyType, path: &PyString) -> PyResult<Markov> {
-        Ok(Markov {chain: Chain::load(path.downcast::<PyString>().unwrap().to_str().unwrap()).unwrap()})
+        Ok(Markov {chain: Chain::load(path.downcast::<PyString>()?.to_str()?)?})
     }
-}
-
-
-#[pyfunction]
-#[text_signature = "(messages: List[str], /)"]
-fn generate_text(messages: &PyList) -> PyResult<String> {
-    let mut chain = Chain::new();
-    for elem in messages.iter() {
-        chain.feed_str(elem.downcast::<PyString>().unwrap().to_str().unwrap_or_default());
-    }
-    Ok(chain.generate_str())
 }
 
 #[pymodule]
 fn markov(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(generate_text, m)?)?;
     m.add_class::<Markov>()?;
     Ok(())
 }
