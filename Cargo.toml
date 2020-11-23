@@ -9,7 +9,6 @@ include = ["src/lib.rs", "README.md"]
 
 [dependencies]
 markov = "*"
-petgraph = "*"
 
 [dependencies.pyo3]
 git = "https://github.com/PyO3/pyo3"
