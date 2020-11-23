@@ -3,18 +3,29 @@ name = "rusty_snake_markov"
 version = "0.1.0"
 authors = ["zomatree <angelokontaxis@hotmail.com>"]
 edition = "2018"
+include = ["src/lib.rs", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 markov = "*"
-num-bigint = "0.2"
 petgraph = "*"
 
 [dependencies.pyo3]
 git = "https://github.com/PyO3/pyo3"
-features = ["extension-module", "num-bigint"]
+features = ["extension-module"]
 
 [lib]
 name = "rusty_snake_markov"
 crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1  # slow build but possibly faster runtime
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = false
+panic = 'unwind'
+incremental = false
+rpath = false
