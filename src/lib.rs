@@ -1,9 +1,5 @@
 extern crate markov;
 use markov::Chain;
-use petgraph::{
-    dot::{Config, Dot},
-    graph::Graph,
-};
 use pyo3::prelude::*;
 use pyo3::types::{PyInt, PyList, PyString, PyType};
 
@@ -16,14 +12,11 @@ struct Markov {
 #[pymethods]
 impl Markov {
     #[new]
-    fn new(order: &PyInt) -> PyResult<Self> {
+    fn new(order: Option<&PyInt>) -> PyResult<Self> {
         Ok(Markov {
-            chain: match order.is_none() {
-                true => Chain::new(),
-                false => {
-                    let value: usize = order.extract()?;
-                    Chain::of_order(value)
-                }
+            chain: match order {
+                None => Chain::new(),
+                Some(order) => Chain::of_order(order.extract::<usize>()?),
             },
         })
     }
@@ -36,36 +29,27 @@ impl Markov {
     }
 
     pub fn train_single(&mut self, message: &PyString) -> PyResult<()> {
-        self.chain
-            .feed_str(message.downcast::<PyString>()?.to_str()?);
+        self.chain.feed_str(message.to_str()?);
         Ok(())
     }
 
-    pub fn generate(&self) -> PyResult<String> {
-        Ok(self.chain.generate_str())
+    pub fn generate(&self) -> String {
+        self.chain.generate_str()
     }
 
-    pub fn generate_seeded(&self, seed: &str) -> PyResult<String> {
-        Ok(self.chain.generate_str_from_token(seed))
-    }
-
-    pub fn graph(&self) -> PyResult<String> {
-        let graph: Graph<Vec<Option<String>>, f64> = self.chain.graph();
-        Ok(format!(
-            "{:?}",
-            Dot::with_config(&graph, &[Config::EdgeNoLabel])
-        ))
+    pub fn generate_seeded(&self, seed: &str) -> String {
+        self.chain.generate_str_from_token(seed)
     }
 
     pub fn save(&self, path: &PyString) -> PyResult<()> {
-        self.chain.save(path.downcast::<PyString>()?.to_str()?)?;
+        self.chain.save(path.to_str()?)?;
         Ok(())
     }
 
     #[classmethod]
     pub fn load(_: &PyType, path: &PyString) -> PyResult<Markov> {
         Ok(Markov {
-            chain: Chain::load(path.downcast::<PyString>()?.to_str()?)?,
+            chain: Chain::load(path.to_str()?)?,
         })
     }
 }
