@@ -1,14 +1,16 @@
 extern crate markov;
-use pyo3::prelude::*;
 use markov::Chain;
+use petgraph::{
+    dot::{Config, Dot},
+    graph::Graph,
+};
+use pyo3::prelude::*;
 use pyo3::types::{PyInt, PyList, PyString, PyType};
-use petgraph::{dot::{Dot, Config}, graph::Graph};
-
 
 #[pyclass]
 #[text_signature = "(order: Optional[int], /)"]
 struct Markov {
-    chain: Chain<String>
+    chain: Chain<String>,
 }
 
 #[pymethods]
@@ -22,7 +24,7 @@ impl Markov {
                     let value: usize = order.extract()?;
                     Chain::of_order(value)
                 }
-            }
+            },
         })
     }
 
@@ -34,7 +36,8 @@ impl Markov {
     }
 
     pub fn train_single(&mut self, message: &PyString) -> PyResult<()> {
-        self.chain.feed_str(message.downcast::<PyString>()?.to_str()?);
+        self.chain
+            .feed_str(message.downcast::<PyString>()?.to_str()?);
         Ok(())
     }
 
@@ -48,8 +51,11 @@ impl Markov {
 
     pub fn graph(&self) -> PyResult<String> {
         let graph: Graph<Vec<Option<String>>, f64> = self.chain.graph();
-        Ok(format!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel])))
-    } 
+        Ok(format!(
+            "{:?}",
+            Dot::with_config(&graph, &[Config::EdgeNoLabel])
+        ))
+    }
 
     pub fn save(&self, path: &PyString) -> PyResult<()> {
         self.chain.save(path.downcast::<PyString>()?.to_str()?)?;
@@ -58,7 +64,9 @@ impl Markov {
 
     #[classmethod]
     pub fn load(_: &PyType, path: &PyString) -> PyResult<Markov> {
-        Ok(Markov {chain: Chain::load(path.downcast::<PyString>()?.to_str()?)?})
+        Ok(Markov {
+            chain: Chain::load(path.downcast::<PyString>()?.to_str()?)?,
+        })
     }
 }
 
